@@ -20,7 +20,7 @@ def load_data(uploaded_file):
 def compare_usage(current, previous):
     diff = current - previous
     color = "green" if diff >= 0 else "red"
-    arrow = "↑" if diff > 0 else "↓" if diff < 0 else "→"
+    arrow = "▲" if diff > 0 else "▼" if diff < 0 else "→"
     return f"<span style='color:{color}'>{arrow} {abs(diff):.1f}%</span>"
 
 def get_filtered_data(df, perspective, subdiv_produk, month='Feb-25'):
@@ -73,8 +73,8 @@ if uploaded_file:
             st.header("BU1 Performance")
 
             # Filter Bulan
-            selected_month = st.selectbox("Pilih Bulan", ["Feb-25"])
-            prev_month = "Jan-25"
+            selected_month = st.selectbox("Pilih Bulan", ["Jan-25", "Feb-25"])
+            prev_month = "Jan-25" if selected_month == "Feb-25" else "Feb-25"
 
             # Perspective Buttons
             perspectives = ['Financial', 'Customer n Service', 'Quality', 'Employee']
@@ -119,8 +119,8 @@ if uploaded_file:
                         col1, col2 = st.columns(2)
                         with col1:
                             fig = go.Figure()
-                            fig.add_trace(go.Bar(x=['Budget', 'Expense'], y=[budget, expense], name='Budget vs Expense'))
-                            fig.update_layout(title_text='Budget vs Expense')
+                            fig.add_trace(go.Bar(x=['Budget', 'Expense'], y=[budget, expense], text=[budget, expense]))
+                            fig.update_layout(title_text='Budget vs Expense', xaxis_tickangle=-45)
                             st.plotly_chart(fig)
 
                         with col2:
@@ -129,8 +129,10 @@ if uploaded_file:
                                 value=usage,
                                 delta={'reference': usage_prev},
                                 title={'text': "Usage (%)"},
-                                gauge={'axis': {'range': [0, 100]},
-                                       'bar': {'color': "#4CAF50"}}
+                                gauge={
+                                    'axis': {'range': [0, 100], 'rotation': 90},  # Align text to center
+                                    'bar': {'color': "#4CAF50"}
+                                }
                             ))
                             st.plotly_chart(fig_gauge)
 
@@ -224,13 +226,13 @@ if uploaded_file:
                         competency = float(data['Competency'].str.replace('%', '').iloc[0])
                         turnover = float(data['Turnover ratio'].str.replace('%', '').iloc[0])
 
-                        remaining_mp = needed_mp - current_mp
+                        mp_shortage = needed_mp - current_mp
 
                         fig_donut = go.Figure(data=[go.Pie(
-                            labels=['Current MP', 'MP Kurang'],
-                            values=[current_mp, remaining_mp],
+                            labels=['Current MP', 'MP Shortage'],
+                            values=[current_mp, mp_shortage],
                             hole=.7)])
-                        fig_donut.update_layout(title_text='Current MP vs Needed MP')
+                        fig_donut.update_layout(title_text='Current MP vs MP Shortage')
                         st.plotly_chart(fig_donut)
 
                         col1, col2 = st.columns(2)

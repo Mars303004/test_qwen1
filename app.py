@@ -131,7 +131,7 @@ if uploaded_file:
                                 delta={'reference': usage_prev},
                                 title={'text': "Usage (%)"},
                                 gauge={
-                                    'axis': {'range': [0, 100]},  # Remove rotation
+                                    'axis': {'range': [0, 100], 'tickfont': {'size': 12}},  # Atur font ukuran
                                     'bar': {'color': "#4CAF50"}
                                 }
                             ))
@@ -161,19 +161,22 @@ if uploaded_file:
                         sat_avg = data['Customer satisfaction'].iloc[0]
                         sat_prev = jan_data['Customer satisfaction'].iloc[0] if not jan_data.empty else 0
 
-                        st.markdown(f"""
-                            <div style="background-color:#f0f0f0;padding:10px;border-radius:10px;">
-                                <h4>Jumlah Pelanggan</h4>
-                                <h3>{cust_count}</h3>
-                                <small>{compare_usage(cust_count, jan_data['Number of customer'].iloc[0])}</small>
-                            </div>
-                        """, unsafe_allow_html=True)
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            fig_donut = go.Figure(data=[go.Pie(labels=['Jumlah Pelanggan', 'Lainnya'],
+                                                               values=[cust_count, 100 - cust_count],
+                                                               hole=.7)])
+                            fig_donut.update_layout(title_text='Distribusi Pelanggan')
+                            st.plotly_chart(fig_donut)
 
-                        fig_donut = go.Figure(data=[go.Pie(labels=['Jumlah Pelanggan', 'Lainnya'],
-                                                           values=[cust_count, 100 - cust_count],
-                                                           hole=.7)])
-                        fig_donut.update_layout(title_text='Distribusi Pelanggan')
-                        st.plotly_chart(fig_donut)
+                        with col2:
+                            st.markdown(f"""
+                                <div style="background-color:#f0f0f0;padding:10px;border-radius:10px;">
+                                    <h4>Jumlah Pelanggan</h4>
+                                    <h3>{cust_count}</h3>
+                                    <small>{compare_usage(cust_count, jan_data['Number of customer'].iloc[0])}</small>
+                                </div>
+                            """, unsafe_allow_html=True)
 
                         fig_gauge = go.Figure(go.Indicator(
                             mode="gauge+number+delta",
@@ -199,7 +202,7 @@ if uploaded_file:
                         quality_prev = float(jan_data['Quality'].str.replace('%', '').iloc[0]) if not jan_data.empty else 0
 
                         fig_bar = go.Figure()
-                        fig_bar.add_trace(go.Bar(x=['Target', 'Realization'], y=[target, realization]))
+                        fig_bar.add_trace(go.Bar(x=['Target', 'Realization'], y=[target, realization], text=[target, realization]))
                         fig_bar.update_layout(title_text='Target vs Realization')
                         st.plotly_chart(fig_bar)
 

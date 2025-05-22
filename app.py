@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from io import StringIO
 
 st.set_page_config(page_title="BU1 Dashboard", layout="wide")
 
@@ -13,23 +12,32 @@ def load_data(uploaded_file):
             df = pd.read_csv(uploaded_file)
         except:
             df = pd.read_excel(uploaded_file)
-        df['Month'] = pd.to_datetime(df['Month'], format='%b-%y')
+        # Parse Month dengan tambahan tanggal agar valid
+        df['Month'] = pd.to_datetime(df['Month'].apply(lambda x: f"01-{x}"), format='%d-%b-%y')
         return df
     return None
-
-def get_filtered_data(df, perspective, subdiv_produk, month='Feb-25'):
-    filtered = df[(df['Perspective'] == perspective) & (df['Month'] == pd.to_datetime(month))]
-    if 'Subdiv' in filtered.columns:
-        return filtered[filtered['Subdiv'] == subdiv_produk]
-    elif 'Produk' in filtered.columns:
-        return filtered[filtered['Produk'] == subdiv_produk]
-    return filtered
 
 def compare_usage(current, previous):
     diff = current - previous
     color = "green" if diff >= 0 else "red"
     arrow = "↑" if diff > 0 else "↓" if diff < 0 else "→"
     return f"<span style='color:{color}'>{arrow} {abs(diff):.1f}%</span>"
+
+def get_filtered_data(df, perspective, subdiv_produk, month='Feb-25'):
+    try:
+        target_month = pd.to_datetime(f"01-{month}", format='%d-%b-%y')
+    except Exception as e:
+        st.error(f"Tidak bisa parse bulan: {month}")
+        return pd.DataFrame()
+
+    filtered = df[df['Perspective'] == perspective]
+    filtered = filtered[filtered['Month'] == target_month]
+
+    if 'Subdiv' in filtered.columns:
+        return filtered[filtered['Subdiv'] == subdiv_produk]
+    elif 'Produk' in filtered.columns:
+        return filtered[filtered['Produk'] == subdiv_produk]
+    return filtered
 
 # --- Main App ---
 st.title("📊 BU1 Performance Dashboard - Februari 2025")
@@ -99,8 +107,9 @@ if uploaded_file:
                     if perspective == 'Financial':
                         budget = data['Budget'].iloc[0]
                         expense = data['Expense'].iloc[0]
-                        usage = data['Usage'].str.replace('%', '').astype(float).iloc[0]
-                        usage_prev = jan_data['Usage'].str.replace('%', '').astype(float).iloc[0] if not jan_data.empty else 0
+                        usage = float(data['Usage'].str.replace('%', '').iloc[0])
+                        usage_prev = float(jan_data['Usage'].str.replace('%', '').iloc[0]) if not jan_data.empty else 0
+
                         profit = data['Profit'].iloc[0]
                         revenue = data['Revenue'].iloc[0]
 
@@ -180,11 +189,11 @@ if uploaded_file:
                     elif perspective == 'Quality':
                         target = data['Target'].iloc[0]
                         realization = data['Realization'].iloc[0]
-                        velocity = data['Velocity'].str.replace('%', '').astype(float).iloc[0]
-                        quality = data['Quality'].str.replace('%', '').astype(float).iloc[0]
+                        velocity = float(data['Velocity'].str.replace('%', '').iloc[0])
+                        quality = float(data['Quality'].str.replace('%', '').iloc[0])
 
-                        velocity_prev = jan_data['Velocity'].str.replace('%', '').astype(float).iloc[0] if not jan_data.empty else 0
-                        quality_prev = jan_data['Quality'].str.replace('%', '').astype(float).iloc[0] if not jan_data.empty else 0
+                        velocity_prev = float(jan_data['Velocity'].str.replace('%', '').iloc[0]) if not jan_data.empty else 0
+                        quality_prev = float(jan_data['Quality'].str.replace('%', '').iloc[0]) if not jan_data.empty else 0
 
                         fig_bar = go.Figure()
                         fig_bar.add_trace(go.Bar(x=['Target', 'Realization'], y=[target, realization]))
@@ -212,8 +221,8 @@ if uploaded_file:
                     elif perspective == 'Employee':
                         current_mp = data['Current MP'].iloc[0]
                         needed_mp = data['Needed MP'].iloc[0]
-                        competency = data['Competency'].str.replace('%', '').astype(float).iloc[0]
-                        turnover = data['Turnover ratio'].str.replace('%', '').astype(float).iloc[0]
+                        competency = float(data['Competency'].str.replace('%', '').iloc[0])
+                        turnover = float(data['Turnover ratio'].str.replace('%', '').iloc[0])
 
                         remaining_mp = needed_mp - current_mp
 

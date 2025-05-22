@@ -33,11 +33,12 @@ def get_filtered_data(df, perspective, subdiv_produk, month='Feb-25'):
     filtered = df[df['Perspective'] == perspective]
     filtered = filtered[filtered['Month'] == target_month]
 
-    if 'Subdiv' in filtered.columns:
-        return filtered[filtered['Subdiv'] == subdiv_produk]
-    elif 'Produk' in filtered.columns:
+    if perspective == 'Customer n Service':
+        # Gunakan kolom 'Produk' untuk perspective Customer n Service
         return filtered[filtered['Produk'] == subdiv_produk]
-    return filtered
+    else:
+        # Gunakan kolom 'Subdiv' untuk perspective lainnya
+        return filtered[filtered['Subdiv'] == subdiv_produk]
 
 # --- Main App ---
 st.title("📊 BU1 Performance Dashboard - Februari 2025")
@@ -130,7 +131,7 @@ if uploaded_file:
                                 delta={'reference': usage_prev},
                                 title={'text': "Usage (%)"},
                                 gauge={
-                                    'axis': {'range': [0, 100], 'rotation': 90},  # Align text to center
+                                    'axis': {'range': [0, 100]},  # Remove rotation
                                     'bar': {'color': "#4CAF50"}
                                 }
                             ))
